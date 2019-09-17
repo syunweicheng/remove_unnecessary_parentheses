@@ -8,6 +8,8 @@ import (
 //Node has a value string.
 type Node struct {
 	value string
+	left  *Node
+	right *Node
 }
 
 //Stack -  LIFO
@@ -57,87 +59,151 @@ func stringInArray(target string, list []string) bool {
 	return false
 }
 
-// f function: remove unneccessary parentheses
-func f(arithmeticExpression string) string {
+// precedenceLevel : return operator precedence level
+// In this function, if the operant's precedence is higher, then the returned integer is smaller)
+func precedenceLevel(op string) int {
+	lowerOp := []string{"-", "+"}
+	higherOp := []string{"*", "/"}
+	if stringInArray(op, lowerOp) {
+		return 2
+	}
+	if stringInArray(op, higherOp) {
+		return 1
+	}
+	return -1
+}
+
+// shuntingYardAlgo: refer to "Shunting Yard Algorithm".
+// Make the expression to a notation in which operators follow their operands.
+func shuntingYardAlgo(arithmeticExpression string) *Stack {
+	var opStack = NewStack()     //Stack for operators
+	var outputStack = NewStack() //Stack for operands
 	var operator = []string{"+", "-", "*", "/"}
-	var operatorHigh = []string{"*", "/"}
-	var operatorLow = []string{"+", "-"}
-	var operatorStack = NewStack() //Stack for operators
-	var operandStack = NewStack()  //Stack for operands
 	negSign := false
-	expression := strings.Replace(arithmeticExpression, " ", "", -1) //Trim spaces in string
 
-	for index, value := range expression { //Each character in the arithmetic expression
+	for index, value := range arithmeticExpression { //Each character in the arithmetic expression
 		newNode := Node{value: string(value)}
-
+		// Negative value
 		if negSign { //negSign is true - Becuase current node was stored in stack, so continue to the next char
 			negSign = false
 			continue
 		}
-		if stringInArray(newNode.value, operator) || newNode.value == "(" {
-			if newNode.value == "-" && (index == 0 || // If "-" is negative sign, push this sign and next char
-				stringInArray(string(expression[index-1]), operator) ||
-				string(expression[index-1]) == "(") {
-				negSign = true
-				newNode.value = newNode.value + string(expression[index+1])
-				operandStack.Push(&newNode)
-				continue
-			}
-			operatorStack.Push(&newNode)
-		} else if newNode.value == ")" {
-			if stringInArray(operatorStack.Toppest().value, operatorHigh) {
-				fisrtNum := operandStack.Pop()
-				newExpression := Node{value: operandStack.Pop().value + operatorStack.Pop().value + fisrtNum.value}
-				operatorStack.Pop() //Remove "("
-				operandStack.Push(&newExpression)
-
-			} else if stringInArray(operatorStack.Toppest().value, operatorLow) {
-				fisrtNum := operandStack.Pop()
-				newExpression := Node{value: operandStack.Pop().value + operatorStack.Pop().value + fisrtNum.value}
-				lastOperator := operatorStack.Pop() //Remove "("
-				if lastOperator != nil && stringInArray(operatorStack.Toppest().value, operatorHigh) {
-					newExpression.value = "(" + newExpression.value + ")"
+		if string(value) == "-" && (index == 0 ||
+			stringInArray(string(arithmeticExpression[index-1]), operator) ||
+			string(arithmeticExpression[index-1]) == "(") {
+			negSign = true
+			newNode.value = newNode.value + string(arithmeticExpression[index+1])
+			outputStack.Push(&newNode)
+			continue
+		} else if stringInArray(string(value), operator) {
+		PrecedenceCondition:
+			for {
+				if opStack.Toppest() == nil || precedenceLevel(opStack.Toppest().value) < precedenceLevel(string(value)) {
+					break PrecedenceCondition
 				}
-				operandStack.Push(&newExpression)
-			} else {
-				panic("The input string is invalid expression.")
+				// top of the operator stack is of lower or equal precedence,add opStack.pop() to output
+				outputStack.Push(opStack.Pop())
 			}
+
+			opStack.Push(&newNode)
+		} else if string(value) == "(" { // left paranthesis
+			opStack.Push(&newNode) //push to the operator stack
+		} else if string(value) == ")" { //right paranthesis
+		ParentheseCondition:
+			for {
+				if opStack.Toppest() == nil || opStack.Toppest().value == "(" {
+					break ParentheseCondition
+				}
+				//top of the operator stack is not a left paranthesis
+				outputStack.Push(opStack.Pop()) //add operator.pop to the output stack
+			}
+			opStack.Pop()
 		} else {
-			var notNumbers = []string{"+", "-", "*", "/", ")", "("}
-			if index > 0 && !stringInArray(string(expression[index-1]), notNumbers) { //more than 1 digit
-				operandStack.Toppest().value = operandStack.Toppest().value + string(expression[index])
+			if index > 0 && !stringInArray(string(arithmeticExpression[index-1]), operator) &&
+				string(arithmeticExpression[index-1]) != "(" &&
+				string(arithmeticExpression[index-1]) != ")" { //more than 1 digit
+				outputStack.Toppest().value = outputStack.Toppest().value + string(arithmeticExpression[index])
 			} else {
-				operandStack.Push(&newNode)
+				outputStack.Push(&newNode)
 			}
 		}
+
 	}
 
-	operatorTurn := false
-	result := []string{}
 	for {
-		if operatorStack.count == 0 && operandStack.count == 0 {
+		if opStack.Toppest() == nil {
 			break
 		}
-		if operatorTurn {
-			result = append(result, operatorStack.Toppest().value)
-			operatorStack.Pop()
-			operatorTurn = false
-		} else {
-			result = append(result, operandStack.Toppest().value)
-			operandStack.Pop()
-			operatorTurn = true
-		}
+		outputStack.Push(opStack.Pop())
 	}
-
-	resExpression := ""
-	for i := (len(result) - 1); i >= 0; i-- {
-		resExpression += result[i]
-	}
-	return resExpression
+	return outputStack
 }
 
+//expressionTree: to represent the expression to a binary expression tree.
+func expressionTree(shingYStack *Stack) *Node {
+	var expressionTreeStack = NewStack()
+	var operator = []string{"+", "-", "*", "/"}
+	for _, node := range shingYStack.node {
+		newNode := Node{value: string(node.value), left: nil, right: nil}
+		if stringInArray(string(node.value), operator) { //op
+			newNode.right = expressionTreeStack.Pop()
+			newNode.left = expressionTreeStack.Pop()
+		}
+		expressionTreeStack.Push(&newNode)
+	}
+	return expressionTreeStack.Toppest()
+}
+
+//inorderTraversal: L -> V -> R
+func inorderTraversal(expressionTreeStack *Node) string {
+	curValue := ""
+	leftValue := ""
+	rightValue := ""
+	if expressionTreeStack != nil {
+		curValue += expressionTreeStack.value
+		leftValue += inorderTraversal(expressionTreeStack.left)
+		rightValue += inorderTraversal(expressionTreeStack.right)
+		if expressionTreeStack.value == "-" && // Right nodes should using () if + or -
+			(expressionTreeStack.right.value == "+" || expressionTreeStack.right.value == "-") {
+			rightValue = "(" + inorderTraversal(expressionTreeStack.right) + ")"
+		}
+		if expressionTreeStack.value == "*" { // Nodes of both sides should using () if + or -
+			if expressionTreeStack.right.value == "+" || expressionTreeStack.right.value == "-" {
+				rightValue = "(" + rightValue + ")"
+			}
+			if expressionTreeStack.left.value == "+" || expressionTreeStack.left.value == "-" {
+				leftValue = "(" + leftValue + ")"
+			}
+		}
+		if expressionTreeStack.value == "/" { // Nodes of both sides should using () if + or -, // Right nodes should using () if *
+			if expressionTreeStack.right.value == "+" || expressionTreeStack.right.value == "-" {
+				rightValue = "(" + rightValue + ")"
+			}
+			if expressionTreeStack.left.value == "+" || expressionTreeStack.left.value == "-" {
+				leftValue = "(" + leftValue + ")"
+			}
+			if expressionTreeStack.right.value == "*" || expressionTreeStack.right.value == "/" {
+				rightValue = "(" + rightValue + ")"
+			}
+		}
+	}
+	return leftValue + curValue + rightValue
+}
+func f(arithmeticExpression string) string {
+	expression := strings.Replace(arithmeticExpression, " ", "", -1) //Trim spaces in string
+	shutingYardOutput := shuntingYardAlgo(expression)
+	expressionTopNode := expressionTree(shutingYardOutput)
+	simplyExpression := inorderTraversal(expressionTopNode)
+
+	return simplyExpression
+}
 func main() {
 	test := []string{
+		"(((-1+(2*(-1+-2)))))",
+		"(1+(2))",
+		"x+(y+z)+(t+a+(v+w))",
+		"2-(2+3)",
+		"(2*(3+4)*5)/6",
 		"1*(2+(3*(4+5)))",
 		"2 + (3 / -5)",
 		"x+(y+z)+(t+(v+w))",
