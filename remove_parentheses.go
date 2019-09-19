@@ -65,10 +65,10 @@ func precedenceLevel(op string) int {
 	lowerOp := []string{"-", "+"}
 	higherOp := []string{"*", "/"}
 	if stringInArray(op, lowerOp) {
-		return 2
+		return 1
 	}
 	if stringInArray(op, higherOp) {
-		return 1
+		return 2
 	}
 	return -1
 }
@@ -98,7 +98,10 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 		} else if stringInArray(string(value), operator) {
 		PrecedenceCondition:
 			for {
-				if opStack.Toppest() == nil || precedenceLevel(opStack.Toppest().value) < precedenceLevel(string(value)) {
+				if opStack.Toppest() == nil {
+					break PrecedenceCondition
+				}
+				if precedenceLevel(opStack.Toppest().value) < precedenceLevel(string(value)) {
 					break PrecedenceCondition
 				}
 				// top of the operator stack is of lower or equal precedence,add opStack.pop() to output
@@ -127,7 +130,6 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 				outputStack.Push(&newNode)
 			}
 		}
-
 	}
 
 	for {
@@ -208,6 +210,12 @@ func main() {
 		"2 + (3 / -5)",
 		"x+(y+z)+(t+(v+w))",
 		"-6+(3*(x+(y*z)))",
+		"2*(2+3-(4*6))+8+7*4", //unpassed start
+		"-(2)-(2+3)",
+		"-(2+3)",
+		"1+(-1)",
+		"((2*((2+3)-(4*6))+(8+(7*4))))",
+		"((2*((2*3)-(4+6))+(8+(7*4))))",
 	}
 
 	for _, testItem := range test {
