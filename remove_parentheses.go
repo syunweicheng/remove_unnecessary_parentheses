@@ -91,10 +91,14 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 		}
 		if string(value) == "-" {
 			if _, err := strconv.Atoi(string(arithmeticExpression[index+1])); err == nil {
-				negSign = true
-				newNode.value = newNode.value + string(arithmeticExpression[index+1])
-				outputStack.Push(&newNode)
-				continue
+				if index > 0 {
+					if _, err := strconv.Atoi(string(arithmeticExpression[index-1])); err != nil {
+						negSign = true
+						newNode.value = newNode.value + string(arithmeticExpression[index+1])
+						outputStack.Push(&newNode)
+						continue
+					}
+				}
 			}
 		}
 		if stringInArray(string(value), operator) {
@@ -203,6 +207,7 @@ func f(arithmeticExpression string) string {
 }
 func main() {
 	test := []string{
+		"2*(1-3)",
 		"(((-1+(2*(-1+-2)))))",
 		"(1+(2))",
 		"x+(y+z)+(t+a+(v+w))",
