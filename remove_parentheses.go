@@ -136,6 +136,14 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 				outputStack.Push(&newNode)
 			}
 		}
+		// for _, value := range outputStack.node {
+		// 	fmt.Printf("outputStack: %s, ", value.value)
+		// }
+		// fmt.Println("")
+		// for _, value := range opStack.node {
+		// 	fmt.Printf("opStack: %s, ", value.value)
+		// }
+		// fmt.Println("")
 	}
 
 	for {
@@ -207,6 +215,16 @@ func f(arithmeticExpression string) string {
 }
 func main() {
 	test := []string{
+		// "a/(b*c)",
+		// "a/(b/c)",
+		// "a*(b*c)",
+		// "a*(b/c)",
+		// "(d/a)*(b+c)",
+		// "(d*a)/(b+c)",
+		// "(d*a)*(b+c)",
+		// "2*(1-3)/(1/2)",
+		// "2*(1-3)*(1/2)",
+		// "(a*b)*(c/d)",
 		"2*(1-3)",
 		"(((-1+(2*(-1+-2)))))",
 		"(1+(2))",
