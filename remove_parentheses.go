@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -88,14 +89,15 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 			negSign = false
 			continue
 		}
-		if string(value) == "-" && (index == 0 ||
-			stringInArray(string(arithmeticExpression[index-1]), operator) ||
-			string(arithmeticExpression[index-1]) == "(") {
-			negSign = true
-			newNode.value = newNode.value + string(arithmeticExpression[index+1])
-			outputStack.Push(&newNode)
-			continue
-		} else if stringInArray(string(value), operator) {
+		if string(value) == "-" {
+			if _, err := strconv.Atoi(string(arithmeticExpression[index+1])); err == nil {
+				negSign = true
+				newNode.value = newNode.value + string(arithmeticExpression[index+1])
+				outputStack.Push(&newNode)
+				continue
+			}
+		}
+		if stringInArray(string(value), operator) {
 		PrecedenceCondition:
 			for {
 				if opStack.Toppest() == nil {
