@@ -175,10 +175,16 @@ func inorderTraversal(expressionTreeStack *Node) string {
 	curValue := ""
 	leftValue := ""
 	rightValue := ""
+	var operator = []string{"+", "-", "*", "/"}
 	if expressionTreeStack != nil {
 		curValue += expressionTreeStack.value
 		leftValue += inorderTraversal(expressionTreeStack.left)
 		rightValue += inorderTraversal(expressionTreeStack.right)
+		if stringInArray(expressionTreeStack.value, operator) { // Right nodes should using
+			if i, err := strconv.Atoi(rightValue); err == nil && i < 0 {
+				rightValue = "(" + string(rightValue) + ")"
+			}
+		}
 		if expressionTreeStack.value == "-" && // Right nodes should using () if + or -
 			(expressionTreeStack.right.value == "+" || expressionTreeStack.right.value == "-") {
 			rightValue = "(" + inorderTraversal(expressionTreeStack.right) + ")"
@@ -189,6 +195,9 @@ func inorderTraversal(expressionTreeStack *Node) string {
 			}
 			if expressionTreeStack.left.value == "+" || expressionTreeStack.left.value == "-" {
 				leftValue = "(" + leftValue + ")"
+			}
+			if i, err := strconv.Atoi(rightValue); err == nil && i < 0 {
+				rightValue = "(" + string(rightValue) + ")"
 			}
 		}
 		if expressionTreeStack.value == "/" { // Nodes of both sides should using () if + or -, // Right nodes should using () if *
@@ -226,7 +235,7 @@ func main() {
 		// "2*(1-3)*(1/2)",
 		// "(a*b)*(c/d)",
 		"2*(1-3)",
-		"(((-1+(2*(-1+-2)))))",
+		"(((-1+(2*(-1-(-2))))))",
 		"(1+(2))",
 		"x+(y+z)+(t+a+(v+w))",
 		"2-(2+3)",
@@ -241,6 +250,9 @@ func main() {
 		"1+(-1)",
 		"((2*((2+3)-(4*6))+(8+(7*4))))",
 		"((2*((2*3)-(4+6))+(8+(7*4))))",
+		"1-(-1)",
+		"1*(-1)",
+		"1/(-1)",
 	}
 
 	for _, testItem := range test {
