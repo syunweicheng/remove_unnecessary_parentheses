@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -99,6 +100,14 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 						continue
 					}
 				}
+			} else {
+				re := regexp.MustCompile(`[a-z A-Z]`)
+				if re.MatchString(string(arithmeticExpression[index+1])) {
+					negSign = true
+					newNode.value = newNode.value + string(arithmeticExpression[index+1])
+					outputStack.Push(&newNode)
+					continue
+				}
 			}
 		}
 		if stringInArray(string(value), operator) {
@@ -183,6 +192,11 @@ func inorderTraversal(expressionTreeStack *Node) string {
 		if stringInArray(expressionTreeStack.value, operator) { // Right nodes should using
 			if i, err := strconv.Atoi(rightValue); err == nil && i < 0 {
 				rightValue = "(" + string(rightValue) + ")"
+			} else {
+				re := regexp.MustCompile(`^-[a-z A-Z]$`)
+				if re.MatchString(rightValue) {
+					rightValue = "(" + string(rightValue) + ")"
+				}
 			}
 		}
 		if expressionTreeStack.value == "-" && // Right nodes should using () if + or -
@@ -224,16 +238,16 @@ func f(arithmeticExpression string) string {
 }
 func main() {
 	test := []string{
-		// "a/(b*c)",
-		// "a/(b/c)",
-		// "a*(b*c)",
-		// "a*(b/c)",
-		// "(d/a)*(b+c)",
-		// "(d*a)/(b+c)",
-		// "(d*a)*(b+c)",
-		// "2*(1-3)/(1/2)",
-		// "2*(1-3)*(1/2)",
-		// "(a*b)*(c/d)",
+		"a/(b*-c)",
+		"a/(b/c)",
+		"a*(b*c)",
+		"a*(b/c)",
+		"(d/a)*(b+c)",
+		"(d*a)/(b+c)",
+		"(d*a)*(b+c)",
+		"2*(1-3)/(1/2)",
+		"2*(1-3)*(1/2)",
+		"(a*b)*(c/d)",
 		"2*(1-3)",
 		"(((-1+(2*(-1-(-2))))))",
 		"(1+(2))",
