@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-//Node has a value string.
+//Node has a left and a right node pointer, and a value .
 type Node struct {
 	value string
 	left  *Node
 	right *Node
 }
 
-//Stack -  LIFO
+//Stack -  LIFO, count is the stack legth.
 type Stack struct {
 	node  []*Node
 	count int
@@ -26,7 +26,7 @@ func (s *Stack) Push(n *Node) {
 	s.count++
 }
 
-// Pop - removes last node.
+// Pop - remove and return the last node
 func (s *Stack) Pop() *Node {
 	if s.count == 0 {
 		return nil
@@ -62,7 +62,7 @@ func stringInArray(target string, list []string) bool {
 }
 
 // precedenceLevel : return operator precedence level
-// In this function, if the operant's precedence is higher, then the returned integer is smaller)
+// In this function, if the operant's precedence is higher, then the returned integer is bigger)
 func precedenceLevel(op string) int {
 	lowerOp := []string{"-", "+"}
 	higherOp := []string{"*", "/"}
@@ -76,7 +76,7 @@ func precedenceLevel(op string) int {
 }
 
 // shuntingYardAlgo: refer to "Shunting Yard Algorithm".
-// Make the expression to a notation in which operators follow their operands.
+// Make the expression to a postfix notation (operators follow their operands).
 func shuntingYardAlgo(arithmeticExpression string) *Stack {
 	var opStack = NewStack()     //Stack for operators
 	var outputStack = NewStack() //Stack for operands
@@ -91,8 +91,10 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 			continue
 		}
 		if string(value) == "-" {
+			//check the char after "-" is a number
 			if _, err := strconv.Atoi(string(arithmeticExpression[index+1])); err == nil {
 				if index > 0 {
+					//check the char before "-" is not a number
 					if _, err := strconv.Atoi(string(arithmeticExpression[index-1])); err != nil {
 						negSign = true
 						newNode.value = newNode.value + string(arithmeticExpression[index+1])
@@ -101,12 +103,15 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 					}
 				}
 			} else {
+				//check the char after "-" is a letter
 				re := regexp.MustCompile(`[a-z A-Z]`)
 				if re.MatchString(string(arithmeticExpression[index+1])) {
-					negSign = true
-					newNode.value = newNode.value + string(arithmeticExpression[index+1])
-					outputStack.Push(&newNode)
-					continue
+					if index > 0 && re.MatchString(string(arithmeticExpression[index-1])) == false {
+						negSign = true
+						newNode.value = newNode.value + string(arithmeticExpression[index+1])
+						outputStack.Push(&newNode)
+						continue
+					}
 				}
 			}
 		}
@@ -119,7 +124,7 @@ func shuntingYardAlgo(arithmeticExpression string) *Stack {
 				if precedenceLevel(opStack.Toppest().value) < precedenceLevel(string(value)) {
 					break PrecedenceCondition
 				}
-				// top of the operator stack is of lower or equal precedence,add opStack.pop() to output
+				// If toppest of opStack is higher or equal precedence then value, push them to ouputStack
 				outputStack.Push(opStack.Pop())
 			}
 
@@ -191,11 +196,11 @@ func inorderTraversal(expressionTreeStack *Node) string {
 		rightValue += inorderTraversal(expressionTreeStack.right)
 		if stringInArray(expressionTreeStack.value, operator) { // Right nodes should using
 			if i, err := strconv.Atoi(rightValue); err == nil && i < 0 {
-				rightValue = "(" + string(rightValue) + ")"
+				rightValue = "(" + rightValue + ")"
 			} else {
 				re := regexp.MustCompile(`^-[a-z A-Z]$`)
 				if re.MatchString(rightValue) {
-					rightValue = "(" + string(rightValue) + ")"
+					rightValue = "(" + rightValue + ")"
 				}
 			}
 		}
