@@ -209,7 +209,7 @@ func inorderTraversal(expressionTreeStack *Node) string {
 			}
 
 			if re.MatchString(leftValue) && expressionTreeStack.parent != nil { // add for left node if parent is +, or if parent is * and current node is /
-				if expressionTreeStack.parent.value == "*" && expressionTreeStack.value == "/" {
+				if expressionTreeStack.parent.value == "*" && precedenceLevel(expressionTreeStack.value) >= precedenceLevel(expressionTreeStack.parent.value) {
 					leftValue = "(" + leftValue + ")"
 				} else if expressionTreeStack.parent.value == "+" {
 					leftValue = "(" + leftValue + ")"
@@ -252,6 +252,8 @@ func f(arithmeticExpression string) string {
 }
 func main() {
 	test := []string{
+		"a*(-b*-c)",
+		"a/(-b*-c)",
 		"a/(b*-c)",
 		"a/(b/c)",
 		"a*(b*c)",
