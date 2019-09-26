@@ -9,9 +9,10 @@ import (
 
 //Node has a left and a right node pointer, and a value .
 type Node struct {
-	value string
-	left  *Node
-	right *Node
+	value  string
+	parent *Node
+	left   *Node
+	right  *Node
 }
 
 //Stack -  LIFO, count is the stack legth.
@@ -176,8 +177,15 @@ func expressionTree(shingYStack *Stack) *Node {
 	for _, node := range shingYStack.node {
 		newNode := Node{value: string(node.value), left: nil, right: nil}
 		if stringInArray(string(node.value), operator) { //op
-			newNode.right = expressionTreeStack.Pop()
-			newNode.left = expressionTreeStack.Pop()
+			newNode.right = expressionTreeStack.Pop() //first popped node is the last-in node, save to the right node.
+			newNode.left = expressionTreeStack.Pop()  //second poppd node is the first-in node, save to the left node.
+			if newNode.right != nil {
+				newNode.right.parent = &newNode
+			}
+			if newNode.left != nil {
+				newNode.left.parent = &newNode
+			}
+			newNode.parent = expressionTreeStack.Toppest()
 		}
 		expressionTreeStack.Push(&newNode)
 	}
@@ -194,13 +202,17 @@ func inorderTraversal(expressionTreeStack *Node) string {
 		curValue += expressionTreeStack.value
 		leftValue += inorderTraversal(expressionTreeStack.left)
 		rightValue += inorderTraversal(expressionTreeStack.right)
-		if stringInArray(expressionTreeStack.value, operator) { // Right nodes should using
-			if i, err := strconv.Atoi(rightValue); err == nil && i < 0 {
+		if stringInArray(expressionTreeStack.value, operator) { //add parethese for neagtive value
+			re := regexp.MustCompile(`^-[a-z A-Z \d]+$`)
+			if re.MatchString(rightValue) { // add for each right node
 				rightValue = "(" + rightValue + ")"
-			} else {
-				re := regexp.MustCompile(`^-[a-z A-Z]$`)
-				if re.MatchString(rightValue) {
-					rightValue = "(" + rightValue + ")"
+			}
+
+			if re.MatchString(leftValue) && expressionTreeStack.parent != nil { // add for left node if parent is +, or if parent is * and current node is /
+				if expressionTreeStack.parent.value == "*" && expressionTreeStack.value == "/" {
+					leftValue = "(" + leftValue + ")"
+				} else if expressionTreeStack.parent.value == "+" {
+					leftValue = "(" + leftValue + ")"
 				}
 			}
 		}
@@ -214,9 +226,6 @@ func inorderTraversal(expressionTreeStack *Node) string {
 			}
 			if expressionTreeStack.left.value == "+" || expressionTreeStack.left.value == "-" {
 				leftValue = "(" + leftValue + ")"
-			}
-			if i, err := strconv.Atoi(rightValue); err == nil && i < 0 {
-				rightValue = "(" + string(rightValue) + ")"
 			}
 		}
 		if expressionTreeStack.value == "/" { // Nodes of both sides should using () if + or -, // Right nodes should using () if *
